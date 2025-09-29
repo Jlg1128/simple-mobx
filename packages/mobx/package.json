@@ -15,6 +15,7 @@
     "typings": "dist/index.d.ts",
     "module": "dist/index.esm.js",
     "scripts": {
+        "dev": "tsup src --watch",
         "build": "tsup"
     },
     "devDependencies": {

@@ -5,7 +5,7 @@ export default defineConfig({
     format: ["cjs", "esm"],
     dts: true,
     clean: true,
-    sourcemap: false,
+    sourcemap: true,
     outExtension({ format, options }) {
         return {
             js: `.${format}.js`

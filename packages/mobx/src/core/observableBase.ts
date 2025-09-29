@@ -1,0 +1,80 @@
+import { IDerivation, IDerivationState } from "./derivation"
+import globalState, { endBatch, startBatch } from "./globalstate";
+
+export const $mobx = Symbol("mobx administration")
+
+export interface IObservable {
+    // diffValue: number
+    /**
+     * Id of the derivation *run* that last accessed this observable.
+     * If this id equals the *run* id of the current derivation,
+     * the dependency is already established
+     */
+    lastAccessedBy_: number
+    // isBeingObserved: boolean
+
+    lowestObserverState_: IDerivationState // Used to avoid redundant propagations
+    // isPendingUnobservation: boolean // Used to push itself to global.pendingUnobservations at most once per batch.
+
+    observers_: Set<IDerivation>
+
+    onUnObserved(): void
+    onObserved(): void
+
+    reportObserved: () => void;
+
+    reportChanged: () => void;
+
+    recorded?: boolean;
+}
+
+export function reportChanged(observable: IObservable) {
+    startBatch();
+    // 避免重复
+    if (observable.lowestObserverState_ !== IDerivationState.STALE) {
+        observable.lowestObserverState_ = IDerivationState.STALE;
+        observable.observers_.forEach((d) => {
+            if (d.dependenciesState_ === IDerivationState.UP_TO_DATE) {
+                d._onBecomeStale();
+            }
+            d.dependenciesState_ = IDerivationState.STALE;
+        })
+    }
+    endBatch();
+}
+
+export function reportObserved(observable: IObservable) {
+    const derivation = globalState.trackingDerivation;
+    derivation?.newObserving_?.push(observable);
+    if (observable.observers_.size === 0) {
+        observable.onObserved();
+    }
+}
+
+export class ObservableBase implements IObservable {
+    observers_ = new Set<IDerivation>();
+    lastAccessedBy_ = 0;
+    lowestObserverState_ = IDerivationState.NOT_TRACKING;
+
+    constructor(
+        public name = 'observableBase@' + globalState.getDevId()
+    ) {
+
+    }
+
+    reportObserved() {
+        reportObserved(this);
+    }
+
+    reportChanged() {
+        reportChanged(this);
+    }
+
+    onObserved() {
+
+    }
+
+    onUnObserved() {
+
+    }
+}

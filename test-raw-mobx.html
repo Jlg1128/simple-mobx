@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/mobx@6.13.7/dist/mobx.umd.development.js">
+
+    </script>
+    <script>
+        Object.keys(mobx).forEach(key => {
+            window[key] = mobx[key];
+        })
+    </script>
+    <script src="./custom.js"></script>
+</body>
+
+</html>

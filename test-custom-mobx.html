@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script type="module">
+        import * as mobx from './packages/mobx/dist/index.esm.js';
+        Object.keys(mobx).forEach(key => {
+            window[key] = mobx[key];
+        })
+    </script>
+    <script type="module" src="./custom.js"></script>
+</body>
+</html>
