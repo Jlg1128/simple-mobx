@@ -16,7 +16,8 @@
     "module": "dist/index.esm.js",
     "scripts": {
         "dev": "tsup src --watch",
-        "build": "tsup"
+        "build": "tsup",
+        "lint": "tsc --noEmit"
     },
     "devDependencies": {
         "tsup": "^8.5.0",
