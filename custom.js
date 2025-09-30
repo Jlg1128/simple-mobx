@@ -42,6 +42,8 @@ window.test = function () {
     })
 }
 
+window.x = observable.
+
 window.a = a;
 
 window.obj = obj;

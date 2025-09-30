@@ -1,7 +1,6 @@
 {
     "name": "mobx-code",
     "version": "0.0.1",
-    "type": "module",
     "files": [
         "src",
         "dist",
@@ -17,7 +16,8 @@
     "scripts": {
         "dev": "tsup src --watch",
         "build": "tsup",
-        "lint": "tsc --noEmit"
+        "lint": "tsc --noEmit",
+        "test": "jest"
     },
     "devDependencies": {
         "tsup": "^8.5.0",

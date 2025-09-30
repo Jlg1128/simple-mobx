@@ -3,7 +3,10 @@
         "target": "es6",
         "module": "esnext",
         "moduleResolution": "node",
-        "lib": ["esnext"],
+        "lib": [
+            "esnext",
+            "DOM"
+        ],
         "downlevelIteration": true,
         "alwaysStrict": true,
         "sourceMap": false,
@@ -20,5 +23,8 @@
         "jsx": "react",
         "esModuleInterop": true,
         "skipLibCheck": true
-    }
+    },
+    "exclude": [
+        "__tests__"
+    ]
 }
