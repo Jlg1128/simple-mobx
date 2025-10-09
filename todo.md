@@ -51,15 +51,8 @@ reaction
 ## current
 还需要什么功能？
 1. observable object 测试，打牢基础
-2. 重新赋值执行优化问题，需要处理POSSIBLY_STALE_
-    obj.age = {
-        value: 1
-    }
+2. performance 测试用例，优化性能
     deleteProperty
     keepAlive_是什么，没有keepAlive endBatch之后就没了
     setter是什么
     trackingContext是什么
-3. 性能优化问题
-
-疑问
-ComputedValue POSSIBLY_STALE

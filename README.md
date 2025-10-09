@@ -1,5 +1,4 @@
 # Simple MobX Implement
-
 For learning reactivity
 
 ## dev run
