@@ -17,3 +17,7 @@ export function isPlainObject(value: any) {
         typeof protoConstructor === "function" && protoConstructor.toString() === plainObjectString
     )
 }
+
+export function hasProp(target: Object, key: PropertyKey) {
+    return Object.prototype.hasOwnProperty.call(target, key);
+}

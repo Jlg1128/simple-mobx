@@ -1,4 +1,4 @@
-import { autorun, observable } from "../src"
+import { autorun, observable } from "../../src"
 
 test('autorun base', () => {
     const a = observable(1);

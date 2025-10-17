@@ -16,5 +16,7 @@
     "**/.hg": true,
     "**/.DS_Store": true,
     "**/Thumbs.db": true
-  }
+  },
+  "jest.rootPath": "packages/mobx",
+  "jest.runMode": "on-demand"
 }

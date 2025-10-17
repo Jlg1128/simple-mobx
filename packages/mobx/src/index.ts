@@ -1,5 +1,5 @@
 import { autorun } from "./core/autorun";
-import { observable } from "./core/observable";
+import { isObservable, observable } from "./core/observable";
 import { Reaction } from "./core/reaction";
 import runInAction from './core/runInAction';
 import { computed } from './core/computed';
@@ -9,5 +9,6 @@ export {
     autorun,
     Reaction,
     runInAction,
-    computed
+    computed,
+    isObservable,
 }

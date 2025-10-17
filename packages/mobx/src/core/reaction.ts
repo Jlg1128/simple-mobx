@@ -34,7 +34,10 @@ class Reaction implements IDerivation, IReaction {
     }
 
     dispose = () => {
-        this.disposesd = false;
+        if (!this.disposesd) {
+            this.disposesd = true;
+            clearObserving(this);
+        }
     };
 
     _schedule() {
@@ -60,9 +63,6 @@ class Reaction implements IDerivation, IReaction {
     }
 
     track(fn) {
-        if (this.disposesd) {
-            clearObserving(this);
-        }
         startBatch();
         trackDerivationFn(this, fn);
         endBatch();

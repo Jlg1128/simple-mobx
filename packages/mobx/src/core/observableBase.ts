@@ -30,6 +30,19 @@ export interface IObservable {
 
 export function reportChanged(observable: IObservable) {
     startBatch();
+    propagateChanged(observable);
+    endBatch();
+}
+
+export function reportObserved(observable: IObservable) {
+    const derivation = globalState.trackingDerivation;
+    derivation?.newObserving_?.push(observable);
+    if (observable.observers_.size === 0) {
+        observable.onObserved();
+    }
+}
+
+export function propagateChanged(observable: IObservable) {
     // 避免重复
     if (observable.lowestObserverState_ !== IDerivationState.STALE) {
         observable.lowestObserverState_ = IDerivationState.STALE;
@@ -39,15 +52,6 @@ export function reportChanged(observable: IObservable) {
             }
             d.dependenciesState_ = IDerivationState.STALE;
         })
-    }
-    endBatch();
-}
-
-export function reportObserved(observable: IObservable) {
-    const derivation = globalState.trackingDerivation;
-    derivation?.newObserving_?.push(observable);
-    if (observable.observers_.size === 0) {
-        observable.onObserved();
     }
 }
 
@@ -77,4 +81,8 @@ export class ObservableBase implements IObservable {
     onUnObserved() {
 
     }
+}
+
+export function removeObserver(observable: IObservable, derivation: IDerivation) {
+    observable.observers_.delete(derivation);
 }

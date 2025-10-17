@@ -1,6 +1,6 @@
 import { isComputed } from "./computed";
 import globalState from "./globalstate";
-import { IObservable } from "./observableBase"
+import { IObservable, removeObserver } from "./observableBase"
 
 export enum IDerivationState {
     NOT_TRACKING = -1,
@@ -62,8 +62,12 @@ export function bindDependencies(derivation: IDerivation) {
             }
         }
     })
-    newObserving_.forEach((observe) => {
-        observe.observers_.add(derivation);
+    newObserving_.forEach((observable) => {
+        observable.observers_.add(derivation);
+        if (observable.lowestObserverState_ > derivation.dependenciesState_) {
+            observable.lowestObserverState_ = derivation.dependenciesState_
+        }
+        delete observable.recorded;
     })
 
     derivation.observing_ = newObserving_;
@@ -95,14 +99,13 @@ export function trackDerivationFn(derivation: IDerivation, fn: () => void) {
 }
 
 export function clearObserving(derivation: IDerivation) {
-    // const obs = derivation.observing_
-    // derivation.observing_ = []
-    // let i = obs.length
-    // while (i--) {
-    //     removeObserver(obs[i], derivation)
-    // }
-
-    // derivation.dependenciesState_ = IDerivationState_.NOT_TRACKING
+    const obs = derivation.observing_
+    derivation.observing_ = []
+    let i = obs.length
+    while (i--) {
+        removeObserver(obs[i], derivation)
+    }
+    derivation.dependenciesState_ = IDerivationState.NOT_TRACKING
 }
 
 export {

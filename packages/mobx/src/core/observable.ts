@@ -1,10 +1,12 @@
 import { isPlainObject } from "../utils";
+import { Computed } from "./computed";
 import { getDevId } from "./globalstate";
-import { $mobx } from "./observableBase";
+import { $mobx, ObservableBase } from "./observableBase";
 import { ObservableObjectAdministration } from "./observableObject";
 import { deepEnhancer, ObservableValue } from "./observableValue";
+import { Reaction } from "./reaction";
 
-function initObservableObject(value: Object, options: { name?: string }) {
+function initObservableObject<T extends Object = any>(value: T, options: { name?: string }) {
     const name = options.name ?? 'ObservableObject@' + getDevId()
     const adm = new ObservableObjectAdministration(value, name);
     const proxy = new Proxy(value, {
@@ -33,7 +35,6 @@ function initObservableObject(value: Object, options: { name?: string }) {
     Object.entries(value).forEach(([key, childVal]) => {
         adm.defineObservableProperty_(key, childVal, deepEnhancer)
     })
-    adm._proxy = proxy;
     Object.defineProperty(value, $mobx, {
         value: adm,
         enumerable: false,
@@ -44,7 +45,7 @@ function initObservableObject(value: Object, options: { name?: string }) {
 }
 
 export const observableFactories = {
-    object(value: Object, options: {name?: string} = {}) {
+    object<T = any>(value: T, options: {name?: string} = {}) {
         return initObservableObject(value, options);
     },
     map() {
@@ -54,13 +55,19 @@ export const observableFactories = {
     },
     array() {
     },
-    primary(value: string | number) {
-        return new ObservableValue(value);
+    box<T>(value: T) {
+        return new ObservableValue<T>(value);
     },
 }
 
 export function isObservable(value: any) {
-    return typeof value === 'object' && !!value[$mobx];
+    return value !== null && typeof value === 'object' &&
+    (
+        !!value[$mobx]
+        || value instanceof ObservableBase
+        || value instanceof Computed
+        || value instanceof Reaction
+    );
 }
 
 export function observable(target: any, options: { name?: string } = {}) {
@@ -73,5 +80,7 @@ export function observable(target: any, options: { name?: string } = {}) {
     if (typeof target === 'object' && target !== null) {
         return target;
     }
-    return observableFactories.primary(target);
+    return observableFactories.box(target);
 }
+
+Object.assign(observable, observableFactories);

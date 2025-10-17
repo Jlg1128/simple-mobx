@@ -1,4 +1,4 @@
-import { computed, observable } from "../src";
+import { computed, observable } from "../../src";
 
 test('computed calc cache', () => {
     const obj = observable({

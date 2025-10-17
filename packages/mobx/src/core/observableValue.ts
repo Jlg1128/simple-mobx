@@ -36,23 +36,23 @@ export interface IEnhancer<T> {
     (newValue: T, name: string): T
 }
 
-class ObservableValue extends ObservableBase {
-    value_: any;
+class ObservableValue<T> extends ObservableBase {
+    value_: T;
     constructor(
-        value: any,
-        public enhancer: IEnhancer<any> = deepEnhancer,
+        value: T,
+        public enhancer: IEnhancer<T> = deepEnhancer,
         name: string = 'observableValue@' + globalState.getDevId(),
     ) {
         super(name);
         this.value_ = enhancer(value, name);
     }
 
-public get() {
+    public get() {
         this.reportObserved();
         return this.value_;
     }
 
-    public set(newValue: any) {
+    public set(newValue: T) {
         newValue = this.prepareNewValue(newValue);
         if (newValue !== ObservableValue.UNCHANGED) {
             this.value_ = newValue;
@@ -60,7 +60,7 @@ public get() {
         }
     }
     
-    public prepareNewValue(newValue) {
+    public prepareNewValue(newValue): any {
         if (Object.is(newValue, this.value_)) {
             return ObservableValue.UNCHANGED;
         }
