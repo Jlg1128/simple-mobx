@@ -108,6 +108,10 @@ export function clearObserving(derivation: IDerivation) {
     derivation.dependenciesState_ = IDerivationState.NOT_TRACKING
 }
 
+export function isComputingDerivation() {
+    return globalState.trackingDerivation !== null // filter out actions inside computations
+}
+
 export {
     IDerivation,
 }

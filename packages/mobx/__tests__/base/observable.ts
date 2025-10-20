@@ -1,6 +1,46 @@
-import * as m from '../../src/index'
+import * as mobx from '../../src/index'
 import { $g } from '../util';
-const { autorun, computed, observable } = m;
+const { autorun, computed, observable, $mobx } = mobx;
+const m = mobx
+
+function buffer() {
+    const b = []
+    let count = 0;
+    const res = function (x) {
+        count++;
+        if (count > 1) {
+            if (typeof x === "object") {
+                const copy = { ...x }
+                delete copy[$mobx]
+                b.push(copy)
+            } else {
+                b.push(x)
+            }
+        }
+    }
+    res.toArray = function () {
+        return b
+    }
+    return res
+}
+
+test('basic', () => {
+    const x = observable.box(3)
+    const b = buffer()
+    autorun(() => {
+        x;
+        b(x.get());
+    })
+    // m.observe(x, b)
+    expect(3).toBe(x.get())
+
+    x.set(5)
+    expect(5).toBe(x.get())
+    console.log(b);
+
+    expect([5]).toEqual(b.toArray())
+    // expect(mobx._isComputingDerivation()).toBe(false)
+})
 
 test("argumentless observable", () => {
     // @ts-ignore
@@ -66,7 +106,16 @@ test('value reassign', () => {
 
 test('ownKeys', () => {
     const a = $g();
+    let count = 1;
     autorun(() => {
+        count++;
         Reflect.ownKeys(a);
     })
+    expect(count).toBe(2);
+    a.foo = {
+        bar: 3
+    }
+    expect(count).toBe(2);
+    a.test = 3;
+    expect(count).toBe(3);
 })

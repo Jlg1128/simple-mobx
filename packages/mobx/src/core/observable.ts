@@ -6,7 +6,7 @@ import { ObservableObjectAdministration } from "./observableObject";
 import { deepEnhancer, ObservableValue } from "./observableValue";
 import { Reaction } from "./reaction";
 
-function initObservableObject<T extends Object = any>(value: T, options: { name?: string }) {
+function initObservableObject<T extends Object = any>(value: T, options: { name?: string }): T {
     const name = options.name ?? 'ObservableObject@' + getDevId()
     const adm = new ObservableObjectAdministration(value, name);
     const proxy = new Proxy(value, {
@@ -44,8 +44,8 @@ function initObservableObject<T extends Object = any>(value: T, options: { name?
     return proxy;
 }
 
-export const observableFactories = {
-    object<T = any>(value: T, options: {name?: string} = {}) {
+export const observableFactories: IObservableFactory = {
+    object<T extends object>(value: T, options: CreateObservableOptions = {}) {
         return initObservableObject(value, options);
     },
     map() {
@@ -58,19 +58,19 @@ export const observableFactories = {
     box<T>(value: T) {
         return new ObservableValue<T>(value);
     },
-}
+} as any;
 
 export function isObservable(value: any) {
     return value !== null && typeof value === 'object' &&
-    (
-        !!value[$mobx]
-        || value instanceof ObservableBase
-        || value instanceof Computed
-        || value instanceof Reaction
-    );
+        (
+            !!value[$mobx]
+            || value instanceof ObservableBase
+            || value instanceof Computed
+            || value instanceof Reaction
+        );
 }
 
-export function observable(target: any, options: { name?: string } = {}) {
+function createObservable(target: any, options: { name?: string } = {}) {
     if (isObservable(target)) {
         return target;
     }
@@ -83,4 +83,32 @@ export function observable(target: any, options: { name?: string } = {}) {
     return observableFactories.box(target);
 }
 
-Object.assign(observable, observableFactories);
+export const observable: IObservableFactory = Object.assign(createObservable, observableFactories);
+
+export interface CreateObservableOptions {
+    name?: string;
+}
+export interface IObservableValueFactory {
+    <T>(value: T, options?: CreateObservableOptions): ObservableValue<T>
+    <T>(value?: T, options?: CreateObservableOptions): ObservableValue<T | undefined>
+}
+
+export interface IObservableFactory {
+    <T extends object>(
+        value: T,
+        options?: CreateObservableOptions
+    ): T;
+    <T = any>(
+        value: T,
+        options?: CreateObservableOptions
+    ): ObservableValue<T>;
+    box: IObservableValueFactory
+    object: <T extends object>(
+        value: T,
+        options?: CreateObservableOptions
+    ) => T;
+    map: any;
+    set: any;
+    array: any;
+}
+

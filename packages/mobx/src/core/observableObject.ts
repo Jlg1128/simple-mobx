@@ -22,7 +22,7 @@ function getCachedObservablePropDescriptor(key) {
 
 export class ObservableObjectAdministration {
     private _values: Map<PropertyKey, ObservableValue<any>> = new Map();
-    // 记录被删除的key的observers，以便后续重新赋值该key
+    // 记录被删除的key的observers，以便后续重新赋值该key时触发reaction，否则无法知道之前是哪些reaction
     private _pendingKeys: Map<PropertyKey, ObservableValue<any>> = new Map();
     private ownKeysAtom: ObservableValue<string> | undefined;
 
