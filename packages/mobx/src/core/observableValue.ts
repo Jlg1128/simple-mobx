@@ -1,4 +1,5 @@
-import { isPlainObject } from "../utils";
+import { UPDATE } from "../constant";
+import { hasListeners, IListenable, isPlainObject, Lambda, notifyListeners, registerListener } from "../utils";
 import globalState from "./globalstate";
 import { isObservable, observable } from "./observable";
 import { ObservableBase } from "./observableBase";
@@ -32,12 +33,22 @@ export function deepEnhancer(v: any, name: string) {
     return v
 }
 
+export type IValueDidChange<T = any> = {
+    type: "update"
+    observableKind: "value"
+    object: ObservableValue<T>
+    debugObjectName: string
+    newValue: T
+    oldValue: T | undefined
+}
+
 export interface IEnhancer<T> {
     (newValue: T, name: string): T
 }
 
-class ObservableValue<T> extends ObservableBase {
+class ObservableValue<T> extends ObservableBase implements IListenable {
     value_: T;
+    changeListeners_: Function[];
     constructor(
         value: T,
         public enhancer: IEnhancer<T> = deepEnhancer,
@@ -53,19 +64,44 @@ class ObservableValue<T> extends ObservableBase {
     }
 
     public set(newValue: T) {
+        const oldValue = this.value_;
         newValue = this.prepareNewValue(newValue);
         if (newValue !== ObservableValue.UNCHANGED) {
             this.value_ = newValue;
             this.reportChanged();
+            if (hasListeners(this)) {
+                notifyListeners(this, {
+                    type: UPDATE,
+                    object: this,
+                    newValue,
+                    oldValue,
+                })
+            }
         }
+        return newValue;
     }
-    
+
     public prepareNewValue(newValue): any {
         if (Object.is(newValue, this.value_)) {
             return ObservableValue.UNCHANGED;
         }
         this.value_ = this.enhancer(newValue, this.name);
         return this.value_;
+    }
+
+
+    _observe(listener: (change: IValueDidChange<T>) => void, fireImmediately?: boolean): Lambda {
+        if (fireImmediately) {
+            listener({
+                observableKind: "value",
+                debugObjectName: this.name,
+                object: this,
+                type: UPDATE,
+                newValue: this.value_,
+                oldValue: undefined
+            })
+        }
+        return registerListener(this, listener)
     }
 
     static UNCHANGED = {};

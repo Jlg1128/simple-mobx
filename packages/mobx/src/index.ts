@@ -5,6 +5,10 @@ import runInAction from './core/runInAction';
 import { computed } from './core/computed';
 import { isComputingDerivation } from "./core/derivation";
 import { $mobx } from "./core/observableBase";
+import { observe } from "./api/observe";
+
+export * from './utils/index';
+export * from './core/reaction';
 
 export {
     observable,
@@ -15,4 +19,5 @@ export {
     isObservable,
     isComputingDerivation as _isComputingDerivation,
     $mobx,
+    observe,
 }

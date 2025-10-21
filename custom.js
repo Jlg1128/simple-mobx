@@ -54,11 +54,21 @@ const x = observable(
         }
     }
 )
-let count = -1;
-autorun(() => {
-    count++;
-    console.log('c');
-    console.log(Object.keys(x));
+observe(x, (v) => {
+    console.log(v);
 })
 
+x.foo = {
+    bar: 2
+}
+
+observe(x.foo, 'bar', (v) => {
+    console.log(v);
+})
+
+x.foo.test = 1;
+
+x.foo.bar = 3
+delete x.foo.bar
+delete x.foo;
 window.x = x;

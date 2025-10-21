@@ -1,10 +1,31 @@
-import { hasProp } from "../utils";
+import { ADD, UPDATE } from "../constant";
+import { hasListeners, hasProp, IListenable, Lambda, notifyListeners, registerListener } from "../utils";
 import globalState, { endBatch, startBatch } from "./globalstate";
 import { $mobx, propagateChanged } from "./observableBase";
 import { deepEnhancer, IEnhancer, ObservableValue } from "./observableValue";
 
 const descriptorCache = Object.create(null)
 
+export type IObjectDidChange<T = any> = {
+    observableKind: "object"
+    name: PropertyKey
+    object: T
+    debugObjectName: string
+} & (
+        | {
+            type: "add"
+            newValue: any
+        }
+        | {
+            type: "update"
+            oldValue: any
+            newValue: any
+        }
+        | {
+            type: "remove"
+            oldValue: any
+        }
+    )
 
 function getCachedObservablePropDescriptor(key) {
     return (
@@ -20,11 +41,12 @@ function getCachedObservablePropDescriptor(key) {
     )
 }
 
-export class ObservableObjectAdministration {
+export class ObservableObjectAdministration implements IListenable {
     private _values: Map<PropertyKey, ObservableValue<any>> = new Map();
     // 记录被删除的key的observers，以便后续重新赋值该key时触发reaction，否则无法知道之前是哪些reaction
     private _pendingKeys: Map<PropertyKey, ObservableValue<any>> = new Map();
     private ownKeysAtom: ObservableValue<string> | undefined;
+    changeListeners_: Function[];
 
     constructor(
         private target: any,
@@ -52,12 +74,26 @@ export class ObservableObjectAdministration {
         }
     }
 
-    getObservablePropValue_(key) {
+    getObservablePropValue_(key: PropertyKey) {
         return this._values.get(key).get();
     }
 
-    setObservablePropValue_(key, value) {
-        this._values.get(key).set(value);
+    setObservablePropValue_(key: PropertyKey, value) {
+        const observable = this._values.get(key);
+        const oldValue = observable.get();
+        const res = observable.set(value);
+        if (res !== ObservableValue.UNCHANGED) {
+            if (hasListeners(this)) {
+                notifyListeners(this, {
+                    type: UPDATE,
+                    object: this,
+                    newValue: res,
+                    oldValue,
+                    name: key,
+                    debugObjectName: this.name
+                })
+            }
+        }
         return true;
     }
 
@@ -103,11 +139,31 @@ export class ObservableObjectAdministration {
             return false;
         }
         startBatch();
-        this._values.delete(key);
+        const notify = hasListeners(this);
+        let value;
+        if (observable) {
+            this._values.delete(key);
+            value = observable.value_;
+        } else {
+            value = this.target[key];
+        }
         delete this.target[key];
         propagateChanged(observable);
         this._pendingKeys?.get(key)?.set(hasProp(this.target, key))
         this.ownKeysAtom.reportChanged();
+        if (hasListeners(this)) {
+            const change: IObjectDidChange = {
+                type: 'remove',
+                observableKind: "object",
+                object: this.target,
+                debugObjectName: this.name,
+                oldValue: value,
+                name: key
+            }
+            if (notify) {
+                notifyListeners(this, change)
+            }
+        }
         endBatch();
         return true;
     }
@@ -122,7 +178,29 @@ export class ObservableObjectAdministration {
     }
 
     _notifyPropertyAddition(key, value) {
+        const notify = hasListeners(this)
+        if (notify) {
+            const change: IObjectDidChange | null =
+                notify
+                    ? ({
+                        type: ADD,
+                        observableKind: "object",
+                        debugObjectName: this.name,
+                        object: this.target,
+                        name: key,
+                        newValue: value
+                    } as const)
+                    : null
+            if (notify) {
+                notifyListeners(this, change)
+            }
+        }
+
         this._pendingKeys.get(key)?.set(true);
         this.ownKeysAtom.reportChanged();
+    }
+
+    _observe(callback: (changes: IObjectDidChange) => void, fireImmediately?: boolean): Lambda {
+        return registerListener(this, callback)
     }
 }

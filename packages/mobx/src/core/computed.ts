@@ -2,6 +2,11 @@ import { IDerivation, IDerivationState, shouldCompute, trackDerivationFn } from 
 import { getDevId } from "./globalstate";
 import { IObservable, reportChanged, reportObserved } from "./observableBase";
 
+export interface IComputedValue<T> {
+    get(): T
+    set(value: T): void;
+}
+
 // @ts-ignore
 function computed(fn: () => void) {
     if (fn) {
@@ -10,7 +15,7 @@ function computed(fn: () => void) {
     return null;
 }
 
-class Computed implements IDerivation, IObservable {
+class Computed<T> implements IDerivation, IComputedValue<T>, IObservable {
     observing_: IObservable[] = [];
     newObserving_: IObservable[] = [];
     dependenciesState_ = IDerivationState.NOT_TRACKING;
@@ -19,7 +24,7 @@ class Computed implements IDerivation, IObservable {
     lastAccessedBy_ = 0;
     lowestObserverState_ = IDerivationState.UP_TO_DATE;
     observers_: Set<IDerivation> = new Set();
-    value_: unknown;
+    value_: T;
 
     constructor(
         public fn: () => void,
@@ -68,6 +73,10 @@ class Computed implements IDerivation, IObservable {
         return this.value_;
     }
 
+    public set(value: T) {
+
+    }
+
     reportChanged() {
         reportChanged(this);
     }
@@ -85,7 +94,7 @@ class Computed implements IDerivation, IObservable {
     }
 }
 
-function isComputed(value: any): value is Computed {
+function isComputed(value: any): value is Computed<any> {
     return value instanceof Computed;
 }
 

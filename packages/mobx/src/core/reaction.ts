@@ -68,7 +68,11 @@ class Reaction implements IDerivation, IReaction {
         endBatch();
     }
 }
+function isReaction(value: any): value is Reaction {
+    return value instanceof Reaction;
+}
 
 export {
-    Reaction
+    Reaction,
+    isReaction,
 }

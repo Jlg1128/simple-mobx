@@ -37,6 +37,16 @@ export function endBatch() {
     globalState.pendingUnobservations = [];
 }
 
+export function untrackedStart() {
+    const prev = globalState.trackingDerivation;
+    globalState.trackingDerivation = null;
+    return prev;
+}
+
+export function untrackedEnd(prev: IDerivation) {
+    globalState.trackingDerivation = prev;
+}
+
 export default globalState;
 
 

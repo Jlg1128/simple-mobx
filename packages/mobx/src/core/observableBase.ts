@@ -83,6 +83,10 @@ export class ObservableBase implements IObservable {
     }
 }
 
+export function isObservableBase(value: any): value is ObservableBase {
+    return value instanceof ObservableBase;
+}
+
 export function removeObserver(observable: IObservable, derivation: IDerivation) {
     observable.observers_.delete(derivation);
 }
