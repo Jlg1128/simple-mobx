@@ -1,6 +1,7 @@
 
 ## current
 - 实现observe，添加observe的测试用例
+- jest cache 和 coverage原理
 - 补充测试用例
 - computed set 是什么
 - keep Alive

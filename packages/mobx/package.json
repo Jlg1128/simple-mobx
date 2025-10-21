@@ -17,7 +17,8 @@
         "dev": "tsup src --watch",
         "build": "tsup",
         "lint": "tsc --noEmit",
-        "test": "jest"
+        "test": "jest",
+        "coverage": "jest --coverage"
     },
     "devDependencies": {
         "tsup": "^8.5.0",
