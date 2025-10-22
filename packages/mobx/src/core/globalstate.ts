@@ -43,7 +43,7 @@ export function untrackedStart() {
     return prev;
 }
 
-export function untrackedEnd(prev: IDerivation) {
+export function untrackedEnd(prev: IDerivation | null) {
     globalState.trackingDerivation = prev;
 }
 

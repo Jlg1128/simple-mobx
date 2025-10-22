@@ -1,5 +1,9 @@
+import { UPDATE } from "../constant";
+import { Lambda } from "../utils";
+import { comparer, IEqualsComparer } from "../utils/comparer";
+import { autorun } from "./autorun";
 import { IDerivation, IDerivationState, shouldCompute, trackDerivationFn } from "./derivation";
-import { getDevId } from "./globalstate";
+import { getDevId, untrackedEnd, untrackedStart } from "./globalstate";
 import { IObservable, reportChanged, reportObserved } from "./observableBase";
 
 export interface IComputedValue<T> {
@@ -8,11 +12,24 @@ export interface IComputedValue<T> {
 }
 
 // @ts-ignore
-function computed(fn: () => void) {
-    if (fn) {
-        return new Computed(fn);
-    }
-    return null;
+function computed<T>(fn: () => T, options?: ComputedOption<T>) {
+    return new Computed<T>(fn, options);
+}
+
+type IComputedDidChange<T = any> = {
+    type: "update"
+    observableKind: "computed"
+    object: unknown
+    debugObjectName: string
+    newValue: T
+    oldValue: T | undefined
+}
+
+type ComputedOption<T> = {
+    name?: string;
+    equalFn?: IEqualsComparer<T>;
+    compareStructural?: boolean;
+    struct?: string;
 }
 
 class Computed<T> implements IDerivation, IComputedValue<T>, IObservable {
@@ -24,13 +41,21 @@ class Computed<T> implements IDerivation, IComputedValue<T>, IObservable {
     lastAccessedBy_ = 0;
     lowestObserverState_ = IDerivationState.UP_TO_DATE;
     observers_: Set<IDerivation> = new Set();
+    // @ts-ignore
     value_: T;
+    name: string;
+    private equals_: IEqualsComparer<any>; 
 
     constructor(
-        public fn: () => void,
-        public name = 'Computed@' + getDevId(),
+        public fn: () => T,
+        options?: ComputedOption<T>,
     ) {
-
+        this.equals_ =
+            options?.equalFn ||
+            (options?.compareStructural || options?.struct
+                ? comparer.structural
+                : comparer.default)
+        this.name = options?.name || ('Computed@' + getDevId());
     }
 
     _onBecomeStale() {
@@ -48,9 +73,9 @@ class Computed<T> implements IDerivation, IComputedValue<T>, IObservable {
 
     trackAndCompute() {
         const oldValue = this.value_;
-        this.value_ = trackDerivationFn(this, this.fn);
+        this.value_ = trackDerivationFn<T>(this, this.fn);
         let changed = false;
-        if (!Object.is(oldValue, this.value_)) {
+        if (!this.equals_(oldValue, this.value_)) {
             changed = true;
         }
         return changed;
@@ -91,6 +116,29 @@ class Computed<T> implements IDerivation, IComputedValue<T>, IObservable {
 
     onObserved(): void {
 
+    }
+
+    _observe(listener: (change: IComputedDidChange<T>) => void, fireImmediately?: boolean): Lambda {
+        let firstTime = true
+        let prevValue: T | undefined = undefined
+        return autorun(() => {
+            // TODO: why is this in a different place than the spyReport() function? in all other observables it's called in the same place
+            let newValue = this.get()
+            if (!firstTime || fireImmediately) {
+                const prevU = untrackedStart()
+                listener({
+                    observableKind: "computed",
+                    debugObjectName: this.name,
+                    type: UPDATE,
+                    object: this,
+                    newValue,
+                    oldValue: prevValue
+                })
+                untrackedEnd(prevU)
+            }
+            firstTime = false
+            prevValue = newValue
+        })
     }
 }
 

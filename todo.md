@@ -1,6 +1,7 @@
 
 ## current
 - 实现observe，添加observe的测试用例
+- mobx这种错误如何管理，深层的错误是否应该及时抛出？
 - jest cache 和 coverage原理
 - 补充测试用例
 - computed set 是什么

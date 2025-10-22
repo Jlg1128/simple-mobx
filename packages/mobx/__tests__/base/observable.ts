@@ -3,19 +3,17 @@ import { $g } from '../util';
 const { autorun, computed, observable, $mobx } = mobx;
 const m = mobx
 
+const voidObserver = function () { }
+
 function buffer() {
-    const b = []
-    let count = 0;
+    const b: any[] = []
     const res = function (x) {
-        count++;
-        if (count > 1) {
-            if (typeof x === "object") {
-                const copy = { ...x }
-                delete copy[$mobx]
-                b.push(copy)
-            } else {
-                b.push(x)
-            }
+        if (typeof x.newValue === "object") {
+            const copy = { ...x.newValue }
+            delete copy[$mobx]
+            b.push(copy)
+        } else {
+            b.push(x.newValue)
         }
     }
     res.toArray = function () {
@@ -24,29 +22,73 @@ function buffer() {
     return res
 }
 
-test('basic', () => {
+test("argumentless observable", () => {
+    const a = observable.box()
+
+    expect(m.isObservable(a)).toBe(true)
+    expect(a.get()).toBe(undefined)
+})
+
+test("basic", function () {
     const x = observable.box(3)
     const b = buffer()
-    autorun(() => {
-        x;
-        b(x.get());
-    })
-    // m.observe(x, b)
+    m.observe(x, b)
     expect(3).toBe(x.get())
 
     x.set(5)
     expect(5).toBe(x.get())
-    console.log(b);
-
     expect([5]).toEqual(b.toArray())
-    // expect(mobx._isComputingDerivation()).toBe(false)
+    expect(mobx._isComputingDerivation()).toBe(false)
 })
 
-test("argumentless observable", () => {
-    // @ts-ignore
-    const a = observable.box()
-    expect(m.isObservable(a)).toBe(true)
-    expect(a.get()).toBe(undefined)
+test("basic2", function () {
+    const x = observable.box(3)
+    const z = computed(function () {
+        return x.get() * 2
+    })
+    const y = computed(function () {
+        return x.get() * 3
+    })
+
+    m.observe(z, voidObserver)
+
+    expect(z.get()).toBe(6)
+    expect(y.get()).toBe(9)
+
+    x.set(5)
+    expect(z.get()).toBe(10)
+    expect(y.get()).toBe(15)
+
+    expect(mobx._isComputingDerivation()).toBe(false)
+})
+
+test("computed with asStructure modifier", function () {
+    const x1 = observable.box(3)
+    const x2 = observable.box(5)
+    const y = m.computed(
+        function () {
+            return {
+                sum: x1.get() + x2.get()
+            }
+        },
+        { compareStructural: true }
+    )
+    const b = buffer()
+    m.observe(y, b, true)
+
+    expect(8).toBe(y.get().sum)
+
+    x1.set(4)
+    expect(9).toBe(y.get().sum)
+
+    m.transaction(function () {
+        // swap values, computation results is structuraly unchanged
+        x1.set(5)
+        x2.set(4)
+    })
+
+    expect(b.toArray()).toEqual([{ sum: 8 }, { sum: 9 }])
+    expect(mobx._isComputingDerivation()).toBe(false)
 })
 
 test('observable primary', () => {
@@ -60,7 +102,7 @@ test('observable object', () => {
             bar: 1
         }
     });
-    let values = [];
+    let values: any[] = [];
     autorun(() => {
         values.push(a.foo.bar);
     })
@@ -73,7 +115,7 @@ test('observe autorun dispose', () => {
     const x2 = computed(function () {
         return x.get() * 2
     })
-    const b = []
+    const b: any[] = []
 
     const cancel = autorun(function () {
         b.push(x2.get())

@@ -6,6 +6,7 @@ import { computed } from './core/computed';
 import { isComputingDerivation } from "./core/derivation";
 import { $mobx } from "./core/observableBase";
 import { observe } from "./api/observe";
+import { transaction } from "./api/transaction";
 
 export * from './utils/index';
 export * from './core/reaction';
@@ -20,4 +21,5 @@ export {
     isComputingDerivation as _isComputingDerivation,
     $mobx,
     observe,
+    transaction,
 }

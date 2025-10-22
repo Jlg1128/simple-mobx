@@ -48,7 +48,7 @@ export interface IEnhancer<T> {
 
 class ObservableValue<T> extends ObservableBase implements IListenable {
     value_: T;
-    changeListeners_: Function[];
+    changeListeners_: Function[] = [];
     constructor(
         value: T,
         public enhancer: IEnhancer<T> = deepEnhancer,

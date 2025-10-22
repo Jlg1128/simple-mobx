@@ -45,8 +45,8 @@ export class ObservableObjectAdministration implements IListenable {
     private _values: Map<PropertyKey, ObservableValue<any>> = new Map();
     // 记录被删除的key的observers，以便后续重新赋值该key时触发reaction，否则无法知道之前是哪些reaction
     private _pendingKeys: Map<PropertyKey, ObservableValue<any>> = new Map();
-    private ownKeysAtom: ObservableValue<string> | undefined;
-    changeListeners_: Function[];
+    private ownKeysAtom: ObservableValue<string>;
+    changeListeners_: Function[] = [];
 
     constructor(
         private target: any,
@@ -75,12 +75,15 @@ export class ObservableObjectAdministration implements IListenable {
     }
 
     getObservablePropValue_(key: PropertyKey) {
+        // @ts-ignore
         return this._values.get(key).get();
     }
 
     setObservablePropValue_(key: PropertyKey, value) {
         const observable = this._values.get(key);
+        // @ts-ignore
         const oldValue = observable.get();
+        // @ts-ignore
         const res = observable.set(value);
         if (res !== ObservableValue.UNCHANGED) {
             if (hasListeners(this)) {
@@ -144,11 +147,11 @@ export class ObservableObjectAdministration implements IListenable {
         if (observable) {
             this._values.delete(key);
             value = observable.value_;
+            delete this.target[key];
+            propagateChanged(observable);
         } else {
             value = this.target[key];
         }
-        delete this.target[key];
-        propagateChanged(observable);
         this._pendingKeys?.get(key)?.set(hasProp(this.target, key))
         this.ownKeysAtom.reportChanged();
         if (hasListeners(this)) {

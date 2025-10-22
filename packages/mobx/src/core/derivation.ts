@@ -80,14 +80,14 @@ export function changeDependenciesStateTo0(derivation: IDerivation) {
     }
     derivation.dependenciesState_ = IDerivationState.UP_TO_DATE
 
-    const obs = derivation.observing_
+    const obs = derivation.observing_ || []
     let i = obs.length
     while (i--) {
         obs[i].lowestObserverState_ = IDerivationState.UP_TO_DATE
     }
 }
 
-export function trackDerivationFn(derivation: IDerivation, fn: () => void) {
+export function trackDerivationFn<T>(derivation: IDerivation, fn: () => T) {
     changeDependenciesStateTo0(derivation);
     const prevTrackingDerivation = globalState.trackingDerivation;
     globalState.trackingDerivation = derivation;
@@ -99,7 +99,7 @@ export function trackDerivationFn(derivation: IDerivation, fn: () => void) {
 }
 
 export function clearObserving(derivation: IDerivation) {
-    const obs = derivation.observing_
+    const obs = derivation.observing_ || []
     derivation.observing_ = []
     let i = obs.length
     while (i--) {

@@ -1,6 +1,14 @@
 const fs = require("fs");
 const path = require('path');
 
+
+/**
+ * 
+ * @param {string} packageDirectory 
+ * @param {import("jest").Config} pkgConfig 
+ * @param {string} tsConfig 
+ * @returns 
+ */
 module.exports = function buildConfig(
     packageDirectory,
     pkgConfig,

@@ -8,11 +8,11 @@ export function observe<T>(
     listener: (change: IValueDidChange<T>) => void,
     fireImmediately?: boolean
 ): Lambda;
-export function observe(thing, propOrCb?, cbOrFire?, fireImmediately?): Lambda {
-    if (isFunction(cbOrFire)) {
-        return observeObservableProperty(thing, propOrCb, cbOrFire, fireImmediately)
+export function observe(thing, propOrCb?, cbOrFireImmediately?, fireImmediately?): Lambda {
+    if (isFunction(cbOrFireImmediately)) {
+        return observeObservableProperty(thing, propOrCb, cbOrFireImmediately, fireImmediately)
     } else {
-        return observeObservable(thing, propOrCb, cbOrFire)
+        return observeObservable(thing, propOrCb, cbOrFireImmediately)
     }
 }
 
