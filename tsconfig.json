@@ -9,7 +9,7 @@
         ],
         "downlevelIteration": true,
         "alwaysStrict": true,
-        "sourceMap": false,
+        "sourceMap": true,
         "declaration": true,
         "removeComments": false,
         "strict": true,
@@ -23,8 +23,5 @@
         "jsx": "react",
         "esModuleInterop": true,
         "skipLibCheck": true
-    },
-    "exclude": [
-        "__tests__"
-    ]
+    }
 }

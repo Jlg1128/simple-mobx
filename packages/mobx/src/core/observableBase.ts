@@ -36,9 +36,11 @@ export function reportChanged(observable: IObservable) {
 
 export function reportObserved(observable: IObservable) {
     const derivation = globalState.trackingDerivation;
-    derivation?.newObserving_?.push(observable);
-    if (observable.observers_.size === 0) {
+    if (derivation !== null) {
+        derivation.newObserving_!.push(observable);
         observable.onObserved();
+    } else if (observable.observers_.size === 0) {
+        globalState.pendingUnobservations.push(observable);
     }
 }
 
@@ -89,4 +91,8 @@ export function isObservableBase(value: any): value is ObservableBase {
 
 export function removeObserver(observable: IObservable, derivation: IDerivation) {
     observable.observers_.delete(derivation);
+    if (observable.observers_.size === 0) {
+        // deleting last observer
+        globalState.pendingUnobservations.push(observable)
+    }
 }

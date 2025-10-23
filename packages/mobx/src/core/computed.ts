@@ -1,13 +1,13 @@
 import { UPDATE } from "../constant";
-import { Lambda } from "../utils";
+import { Lambda, toPrimitive } from "../utils";
 import { comparer, IEqualsComparer } from "../utils/comparer";
 import { autorun } from "./autorun";
-import { IDerivation, IDerivationState, shouldCompute, trackDerivationFn } from "./derivation";
-import { getDevId, untrackedEnd, untrackedStart } from "./globalstate";
+import { clearObserving, IDerivation, IDerivationState, shouldCompute, trackDerivationFn } from "./derivation";
+import globalState, { endBatch, getDevId, startBatch, untrackedEnd, untrackedStart } from "./globalstate";
 import { IObservable, reportChanged, reportObserved } from "./observableBase";
 
 export interface IComputedValue<T> {
-    get(): T
+    get(): T;
     set(value: T): void;
 }
 
@@ -21,7 +21,7 @@ type IComputedDidChange<T = any> = {
     observableKind: "computed"
     object: unknown
     debugObjectName: string
-    newValue: T
+    newValue: T | undefined;
     oldValue: T | undefined
 }
 
@@ -30,6 +30,7 @@ type ComputedOption<T> = {
     equalFn?: IEqualsComparer<T>;
     compareStructural?: boolean;
     struct?: string;
+    keepAlive?: boolean;
 }
 
 class Computed<T> implements IDerivation, IComputedValue<T>, IObservable {
@@ -42,9 +43,10 @@ class Computed<T> implements IDerivation, IComputedValue<T>, IObservable {
     lowestObserverState_ = IDerivationState.UP_TO_DATE;
     observers_: Set<IDerivation> = new Set();
     // @ts-ignore
-    value_: T;
+    value_: T | undefined;
     name: string;
-    private equals_: IEqualsComparer<any>; 
+    private equals_: IEqualsComparer<any>;
+    private keepAlive?: boolean;
 
     constructor(
         public fn: () => T,
@@ -56,6 +58,7 @@ class Computed<T> implements IDerivation, IComputedValue<T>, IObservable {
                 ? comparer.structural
                 : comparer.default)
         this.name = options?.name || ('Computed@' + getDevId());
+        this.keepAlive = options?.keepAlive || false;
     }
 
     _onBecomeStale() {
@@ -81,25 +84,41 @@ class Computed<T> implements IDerivation, IComputedValue<T>, IObservable {
         return changed;
     }
 
-    get() {
-        this.reportObserved();
-        if (shouldCompute(this)) {
-            if (this.trackAndCompute()) {
-                if (this.lowestObserverState_ !== IDerivationState.STALE) {
-                    this.lowestObserverState_ = IDerivationState.UP_TO_DATE;
-                    this.observers_.forEach((observer) => {
-                        if (observer.dependenciesState_ === IDerivationState.POSSIBLY_STALE) {
-                            observer.dependenciesState_ = IDerivationState.STALE;
-                        }
-                    })
+    get(): T {
+        if (this.observers_.size === 0 && !globalState.inBatch && !this.keepAlive) {
+            if (shouldCompute(this)) {
+                // this.warnAboutUntrackedRead_()
+                startBatch() // See perf test 'computed memoization'
+                this.value_ = this.fn()
+                endBatch()
+            }
+        } else {
+            this.reportObserved();
+            if (shouldCompute(this)) {
+                if (this.trackAndCompute()) {
+                    if (this.lowestObserverState_ !== IDerivationState.STALE) {
+                        this.lowestObserverState_ = IDerivationState.UP_TO_DATE;
+                        this.observers_.forEach((observer) => {
+                            if (observer.dependenciesState_ === IDerivationState.POSSIBLY_STALE) {
+                                observer.dependenciesState_ = IDerivationState.STALE;
+                            }
+                        })
+                    }
                 }
             }
         }
-        return this.value_;
+        return this.value_!;
     }
 
     public set(value: T) {
 
+    }
+
+    _suspend() {
+        if (!this.keepAlive) {
+            clearObserving(this);
+            this.value_ = undefined;
+        }
     }
 
     reportChanged() {
@@ -139,6 +158,22 @@ class Computed<T> implements IDerivation, IComputedValue<T>, IObservable {
             firstTime = false
             prevValue = newValue
         })
+    }
+
+    toJSON() {
+        return this.get()
+    }
+
+    toString() {
+        return `${this.name}[${this.value_}]`
+    }
+
+    valueOf(): T {
+        return toPrimitive(this.get())
+    }
+
+    [Symbol.toPrimitive]() {
+        return this.valueOf()
     }
 }
 

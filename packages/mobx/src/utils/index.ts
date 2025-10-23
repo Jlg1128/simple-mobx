@@ -41,4 +41,8 @@ export function once(func: Lambda): Lambda {
     }
 }
 
+export function toPrimitive(value: any) {
+    return value === null ? null : typeof value === "object" ? "" + value : value
+}
+
 export * from './listenable';

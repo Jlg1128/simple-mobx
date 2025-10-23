@@ -1,5 +1,6 @@
 import { UPDATE } from "../constant";
-import { hasListeners, IListenable, isPlainObject, Lambda, notifyListeners, registerListener } from "../utils";
+import { hasListeners, IListenable, isPlainObject, Lambda, notifyListeners, registerListener, toPrimitive } from "../utils";
+import { comparer, IEqualsComparer } from "../utils/comparer";
 import globalState from "./globalstate";
 import { isObservable, observable } from "./observable";
 import { ObservableBase } from "./observableBase";
@@ -52,10 +53,12 @@ class ObservableValue<T> extends ObservableBase implements IListenable {
     constructor(
         value: T,
         public enhancer: IEnhancer<T> = deepEnhancer,
-        name: string = 'observableValue@' + globalState.getDevId(),
+        public name: string = 'observableValue@' + globalState.getDevId(),
+        private equals: IEqualsComparer<any> = comparer.default
     ) {
         super(name);
         this.value_ = enhancer(value, name);
+        this.equals = equals;
     }
 
     public get() {
@@ -82,7 +85,7 @@ class ObservableValue<T> extends ObservableBase implements IListenable {
     }
 
     public prepareNewValue(newValue): any {
-        if (Object.is(newValue, this.value_)) {
+        if (this.equals(newValue, this.value_)) {
             return ObservableValue.UNCHANGED;
         }
         this.value_ = this.enhancer(newValue, this.name);
@@ -105,6 +108,22 @@ class ObservableValue<T> extends ObservableBase implements IListenable {
     }
 
     static UNCHANGED = {};
+
+    toJSON() {
+        return this.get()
+    }
+
+    toString() {
+        return `${this.name}[${this.value_}]`
+    }
+
+    valueOf(): T {
+        return toPrimitive(this.get())
+    }
+
+    [Symbol.toPrimitive]() {
+        return this.valueOf()
+    }
 }
 
 export {

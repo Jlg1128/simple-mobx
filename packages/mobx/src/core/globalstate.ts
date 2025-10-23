@@ -1,3 +1,4 @@
+import { isComputed } from "./computed";
 import { IDerivation } from "./derivation";
 import { IObservable } from "./observableBase";
 import { Reaction, runReactions } from "./reaction";
@@ -33,6 +34,13 @@ export function endBatch() {
     runReactions();
     globalState.pendingUnobservations.forEach((observable) => {
         observable.onUnObserved();
+        if (observable.observers_.size === 0) {
+            if (isComputed(observable)) {
+                // computed values are automatically teared down when the last observer leaves
+                // this process happens recursively, this computed might be the last observabe of another, etc..
+                observable._suspend()
+            }
+        }
     })
     globalState.pendingUnobservations = [];
 }

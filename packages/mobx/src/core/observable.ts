@@ -1,4 +1,5 @@
 import { isPlainObject } from "../utils";
+import { IEqualsComparer } from "../utils/comparer";
 import { Computed } from "./computed";
 import { getDevId } from "./globalstate";
 import { $mobx, ObservableBase } from "./observableBase";
@@ -6,7 +7,7 @@ import { ObservableObjectAdministration } from "./observableObject";
 import { deepEnhancer, ObservableValue } from "./observableValue";
 import { Reaction } from "./reaction";
 
-function initObservableObject<T extends Object = any>(value: T, options: { name?: string }): T {
+function initObservableObject<T extends Object = any>(value: T, options: CreateObservableOptions): T {
     const name = options.name ?? 'ObservableObject@' + getDevId()
     const adm = new ObservableObjectAdministration(value, name);
     const proxy = new Proxy(value, {
@@ -55,8 +56,8 @@ export const observableFactories: IObservableFactory = {
     },
     array() {
     },
-    box<T>(value: T) {
-        return new ObservableValue<T>(value);
+    box<T>(value: T, options: CreateObservableOptions = {}) {
+        return new ObservableValue<T>(value, deepEnhancer, options?.name, options.equals);
     },
 } as any;
 
@@ -70,7 +71,7 @@ export function isObservable(value: any) {
         );
 }
 
-function createObservable(target: any, options: { name?: string } = {}) {
+function createObservable(target: any, options: { name?: string; equals?: IEqualsComparer<any> } = {}) {
     if (isObservable(target)) {
         return target;
     }
@@ -80,13 +81,14 @@ function createObservable(target: any, options: { name?: string } = {}) {
     if (typeof target === 'object' && target !== null) {
         return target;
     }
-    return observableFactories.box(target);
+    return observableFactories.box(target, options);
 }
 
 export const observable: IObservableFactory = Object.assign(createObservable, observableFactories);
 
 export interface CreateObservableOptions {
     name?: string;
+    equals?: IEqualsComparer<any>
 }
 export interface IObservableValueFactory {
     <T>(value: T, options?: CreateObservableOptions): ObservableValue<T>

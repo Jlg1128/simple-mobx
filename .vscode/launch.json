@@ -7,9 +7,11 @@
       "request": "launch",
       "program": "${workspaceRoot}/node_modules/jest/bin/jest.js",
       "args": [
-        "--no-cache"
+        "-i",
+        "${file}",
+        // "-t",
+        // "${input:case}"
       ],
-      "console": "integratedTerminal",
     }
   ]
 }
