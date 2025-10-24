@@ -55,6 +55,16 @@ export function untrackedEnd(prev: IDerivation | null) {
     globalState.trackingDerivation = prev;
 }
 
+export function queueForUnObserve(observable: IObservable) {
+    if (observable.isPendingUnobservation === false) {
+        globalState.pendingUnobservations.push(observable);
+    }
+}
+
+export function _getGlobalState() {
+    return globalState;
+}
+
 export default globalState;
 
 

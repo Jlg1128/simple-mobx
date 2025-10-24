@@ -1,6 +1,6 @@
 import { clearObserving, IDerivation, IDerivationState, shouldCompute, trackDerivationFn } from "./derivation";
 import globalState, { endBatch, startBatch } from "./globalstate";
-import { IObservable } from "./observableBase";
+import { $mobx, IObservable } from "./observableBase";
 
 export function runReactions() {
     if (globalState.inBatch) {
@@ -17,6 +17,11 @@ export function runReactions() {
 
 interface IReaction {
     dispose: () => void;
+}
+
+export interface IReactionDisposer {
+    (): void
+    [$mobx]: Reaction
 }
 
 class Reaction implements IDerivation, IReaction {
@@ -39,6 +44,18 @@ class Reaction implements IDerivation, IReaction {
             clearObserving(this);
         }
     };
+
+    getDisposer(): IReactionDisposer {
+        const dispose = (() => {
+            this.dispose()
+        }) as IReactionDisposer
+        dispose[$mobx] = this
+
+        if ("dispose" in Symbol && typeof Symbol.dispose === "symbol") {
+            dispose[Symbol.dispose] = dispose
+        }
+        return dispose;
+    }
 
     _schedule() {
         globalState.pendingReactions.push(this);

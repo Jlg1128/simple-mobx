@@ -1,10 +1,10 @@
 import { UPDATE } from "../constant";
-import { Lambda, toPrimitive } from "../utils";
+import { getFlag, Lambda, setFlag, toPrimitive } from "../utils";
 import { comparer, IEqualsComparer } from "../utils/comparer";
 import { autorun } from "./autorun";
 import { clearObserving, IDerivation, IDerivationState, shouldCompute, trackDerivationFn } from "./derivation";
 import globalState, { endBatch, getDevId, startBatch, untrackedEnd, untrackedStart } from "./globalstate";
-import { IObservable, reportChanged, reportObserved } from "./observableBase";
+import { IObservable, ObservableBase, reportChanged, reportObserved } from "./observableBase";
 
 export interface IComputedValue<T> {
     get(): T;
@@ -42,6 +42,7 @@ class Computed<T> implements IDerivation, IComputedValue<T>, IObservable {
     lastAccessedBy_ = 0;
     lowestObserverState_ = IDerivationState.UP_TO_DATE;
     observers_: Set<IDerivation> = new Set();
+    private flags_ = 0b000
     // @ts-ignore
     value_: T | undefined;
     name: string;
@@ -158,6 +159,14 @@ class Computed<T> implements IDerivation, IComputedValue<T>, IObservable {
             firstTime = false
             prevValue = newValue
         })
+    }
+
+    get isPendingUnobservation(): boolean {
+        return getFlag(this.flags_, ObservableBase.isPendingUnobservationMask_)
+    }
+    
+    set isPendingUnobservation(newValue: boolean) {
+        this.flags_ = setFlag(this.flags_, ObservableBase.isPendingUnobservationMask_, newValue)
     }
 
     toJSON() {

@@ -1,5 +1,5 @@
 import { isComputed } from "./computed";
-import globalState from "./globalstate";
+import globalState, { queueForUnObserve } from "./globalstate";
 import { IObservable, removeObserver } from "./observableBase"
 
 export enum IDerivationState {
@@ -58,7 +58,7 @@ export function bindDependencies(derivation: IDerivation) {
         if (!observe.recorded) {
             observe.observers_.delete(derivation);
             if (observe.observers_.size === 0) {
-                globalState.pendingUnobservations.push(observe);
+                queueForUnObserve(observe);
             }
         }
     })

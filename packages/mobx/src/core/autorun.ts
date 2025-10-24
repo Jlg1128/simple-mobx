@@ -9,7 +9,7 @@ function autorun(view: (r: Reaction) => void) {
         }
     );
     reaction._onBecomeStale();
-    return reaction.dispose;
+    return reaction.getDisposer();
 }
 
 export {

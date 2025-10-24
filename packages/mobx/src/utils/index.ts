@@ -45,4 +45,17 @@ export function toPrimitive(value: any) {
     return value === null ? null : typeof value === "object" ? "" + value : value
 }
 
+export function getFlag(flags: number, mask: number) {
+    return !!(flags & mask)
+}
+
+export function setFlag(flags: number, mask: number, newValue: boolean): number {
+    if (newValue) {
+        flags |= mask
+    } else {
+        flags &= ~mask
+    }
+    return flags
+}
+
 export * from './listenable';

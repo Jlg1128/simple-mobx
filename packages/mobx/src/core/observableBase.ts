@@ -1,5 +1,6 @@
+import { getFlag, setFlag } from "../utils";
 import { IDerivation, IDerivationState } from "./derivation"
-import globalState, { endBatch, startBatch } from "./globalstate";
+import globalState, { endBatch, queueForUnObserve, startBatch } from "./globalstate";
 
 export const $mobx = Symbol("mobx administration")
 
@@ -14,7 +15,7 @@ export interface IObservable {
     // isBeingObserved: boolean
 
     lowestObserverState_: IDerivationState // Used to avoid redundant propagations
-    // isPendingUnobservation: boolean // Used to push itself to global.pendingUnobservations at most once per batch.
+    isPendingUnobservation: boolean // Used to push itself to global.pendingUnobservations at most once per batch.
 
     observers_: Set<IDerivation>
 
@@ -40,7 +41,7 @@ export function reportObserved(observable: IObservable) {
         derivation.newObserving_!.push(observable);
         observable.onObserved();
     } else if (observable.observers_.size === 0) {
-        globalState.pendingUnobservations.push(observable);
+        queueForUnObserve(observable);
     }
 }
 
@@ -61,6 +62,9 @@ export class ObservableBase implements IObservable {
     observers_ = new Set<IDerivation>();
     lastAccessedBy_ = 0;
     lowestObserverState_ = IDerivationState.NOT_TRACKING;
+
+    private flags_ = 0b000
+    public static readonly isPendingUnobservationMask_ = 0b010
 
     constructor(
         public name = 'observableBase@' + globalState.getDevId()
@@ -83,6 +87,13 @@ export class ObservableBase implements IObservable {
     onUnObserved() {
 
     }
+
+    get isPendingUnobservation(): boolean {
+        return getFlag(this.flags_, ObservableBase.isPendingUnobservationMask_)
+    }
+    set isPendingUnobservation(newValue: boolean) {
+        this.flags_ = setFlag(this.flags_, ObservableBase.isPendingUnobservationMask_, newValue)
+    }
 }
 
 export function isObservableBase(value: any): value is ObservableBase {
@@ -93,6 +104,6 @@ export function removeObserver(observable: IObservable, derivation: IDerivation)
     observable.observers_.delete(derivation);
     if (observable.observers_.size === 0) {
         // deleting last observer
-        globalState.pendingUnobservations.push(observable)
+        queueForUnObserve(observable);
     }
 }

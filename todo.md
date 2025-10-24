@@ -1,6 +1,6 @@
 
 ## current
-- isPendingUnobservation
+- isPendingUnobservation测试，baf8cc48f16e116317ed1d302e0769a92d6a7c48存在问题
 - 补充测试用例
 - mobx这种错误如何管理，深层的错误是否应该及时抛出？
 - jest cache 和 coverage原理
