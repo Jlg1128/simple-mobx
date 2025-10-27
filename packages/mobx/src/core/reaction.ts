@@ -67,8 +67,6 @@ class Reaction implements IDerivation, IReaction {
     }
 
     _runReaction() {
-        const prev = globalState.trackingDerivation
-        globalState.trackingDerivation = this;
         if (shouldCompute(this)) {
             try {
                 this.onInvalidate();
@@ -76,7 +74,6 @@ class Reaction implements IDerivation, IReaction {
                 throw error;
             }
         }
-        globalState.trackingDerivation = prev;
     }
 
     track(fn) {
