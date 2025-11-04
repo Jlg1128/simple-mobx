@@ -10,11 +10,10 @@ export function deepEnhancer(v: any, name: string) {
     if (isObservable(v)) {
         return v
     }
-
     // something that can be converted and mutated?
-    // if (Array.isArray(v)) {
-    //     return observable.array(v, { name })
-    // }
+    if (Array.isArray(v)) {
+        return observable.array(v, { name })
+    }
     if (isPlainObject(v)) {
         return observable(v, { name })
     }

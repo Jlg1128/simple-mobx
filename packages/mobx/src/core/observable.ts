@@ -2,6 +2,7 @@ import { isPlainObject } from "../utils";
 import { IEqualsComparer } from "../utils/comparer";
 import { Computed } from "./computed";
 import { getDevId } from "./globalstate";
+import { createObservableArray, IObservableArray } from "./observableArray";
 import { $mobx, ObservableBase } from "./observableBase";
 import { ObservableObjectAdministration } from "./observableObject";
 import { deepEnhancer, ObservableValue } from "./observableValue";
@@ -54,7 +55,8 @@ export const observableFactories: IObservableFactory = {
     },
     set() {
     },
-    array() {
+    array<T = any>(initialValues: T[], options: CreateObservableOptions = {}) {
+        return createObservableArray(initialValues, deepEnhancer, options);
     },
     box<T>(value: T, options: CreateObservableOptions = {}) {
         return new ObservableValue<T>(value, deepEnhancer, options?.name, options.equals);
@@ -77,6 +79,9 @@ function createObservable(target: any, options: { name?: string; equals?: IEqual
     }
     if (isPlainObject(target)) {
         return observableFactories.object(target, options);
+    }
+    if (Array.isArray(target)) {
+        return observableFactories.array(target)
     }
     if (typeof target === 'object' && target !== null) {
         return target;
@@ -111,6 +116,9 @@ export interface IObservableFactory {
     ) => T;
     map: any;
     set: any;
-    array: any;
+    array: <T = any>(
+        value: T[],
+        options?: CreateObservableOptions
+    ) => IObservableArray<T>;
 }
 

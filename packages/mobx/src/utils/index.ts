@@ -58,4 +58,5 @@ export function setFlag(flags: number, mask: number, newValue: boolean): number 
     return flags
 }
 
+export const EMPTY_ARRAY = [];
 export * from './listenable';

@@ -1,7 +1,6 @@
 
 ## current
-- 支持array
-- computed set 是什么
+- 数组测试
 - performance 测试用例，优化性能
     一个监听多个
     链式监听
