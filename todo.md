@@ -1,9 +1,4 @@
 
 ## current
-- 数组测试
-- performance 测试用例，优化性能
-    一个监听多个
-    链式监听
-    ...
-- mobx这种错误如何管理，深层的错误是否应该及时抛出？
+- 性能
 - jest cache 和 coverage原理
