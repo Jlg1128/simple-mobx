@@ -1,5 +1,5 @@
 {
-    "name": "mobx-code",
+    "name": "simple-mobx",
     "version": "0.0.1",
     "files": [
         "src",
@@ -19,9 +19,5 @@
         "lint": "tsc --noEmit",
         "test": "jest",
         "coverage": "jest --coverage"
-    },
-    "devDependencies": {
-        "tsup": "^8.5.0",
-        "typescript": "~5.9.2"
     }
 }
